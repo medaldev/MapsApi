@@ -18,16 +18,16 @@ def convert_to_png(name):
 
 def get_map_on_coords(coords, z):
     payload = {'apikey': 'fe93f537-0f16-4412-a99a-090347b6cc4f',
-               'l': choice(['map']),
+               'l': 'skl',
+               'll': coords,
                'z': z,
-               'll': ','.join(list(map(str, coords))),
+
                }
     name = "newobject"
     r = get("https://static-maps.yandex.ru/1.x", params=payload)
     with open(f"{name}.jpg", "wb") as file:
         file.write(r.content)
     convert_to_png(name)
-    return name
 
 
 class Application(QWidget):
@@ -62,7 +62,7 @@ class Application(QWidget):
         self.img.resize(GameData.width, GameData.pixmap_height)
 
     def check(self):
-        get_map_on_coords(self.address.text().split(), GameData.z)
+        get_map_on_coords(self.address.text().replace(" ", ""), GameData.z)
         pixmap = QPixmap("newobject.png")
         self.img.setPixmap(pixmap)
 
@@ -73,7 +73,7 @@ class GameData:
     width = 600
     height = 600
     images = []
-    z = 14
+    z = 7
 
 
 def lonlat_distance(a, b):
