@@ -9,6 +9,7 @@ from PyQt5.QtGui import QPixmap
 from itertools import cycle
 from json import dumps, loads
 from pprint import pprint
+from PyQt5.QtCore import Qt
 
 
 def convert_to_png(name):
@@ -54,14 +55,27 @@ class Toponim:
         height = lonlat_distance(b, c)
         return width, height
 
-    def __get_z(self, height):
-        return
+    def get_corners(self):
+        coords = self.toponim["boundedBy"]["Envelope"]
+        a = list(map(float, coords["lowerCorner"].split(" ")))
+        c = list(map(float, coords["upperCorner"].split(" ")))
+        return a, c
+
+    def select_zoom(self, a, b):
+
+        a_lon, a_lat = a
+        b_lon, b_lat = b
+        delta_lon = abs(a_lon - b_lon)
+        delta_lat = abs(a_lat - b_lat)
+        z_x = math.log(180 / delta_lon, 2)
+        z_y = math.log(360 / delta_lat, 2)
+        z = max(int(z_x), int(z_y))
+
+        return z
 
     def get_map(self):
-        x, y = self.get_size()
-        square = math.sqrt(math.sqrt(math.sqrt(x * y)))
-        z = int(max(14, min(17, square)))
-        print(z, square)
+        z = self.select_zoom(*self.get_corners())
+        print(z)
         payload = {'apikey': 'fe93f537-0f16-4412-a99a-090347b6cc4f',
                    'l': choice(['map']),
                    'z': z,
@@ -119,12 +133,29 @@ class Application(QWidget):
         pixmap = QPixmap("newobject.png")
         self.img.setPixmap(pixmap)
 
+    def keyPressEvent(self, key):
+        if key.key() == Qt.Key_PageDown:
+            pass
+        elif key.key() == Qt.Key_PageUp:
+            pass
+        elif key.key() == Qt.Key_Up:
+            pass
+        elif key.key() == Qt.Key_Down:
+            pass
+        elif key.key() == Qt.Key_Left:
+            pass
+        elif key.key() == Qt.Key_Right:
+            pass
+
 
 class GameData:
     valid = None
     pixmap_height = 450
     width = 600
     height = 600
+    z = 15
+    longitude = ""
+    latitude = ""
     images = []
 
 
