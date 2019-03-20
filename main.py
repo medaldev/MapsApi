@@ -62,7 +62,7 @@ class Application(QWidget):
         self.img.resize(GameData.width, GameData.pixmap_height)
 
     def check(self):
-        get_map_on_coords(self.address.text(), GameData.z)
+        get_map_on_coords(self.address.text().split(), GameData.z)
         pixmap = QPixmap("newobject.png")
         self.img.setPixmap(pixmap)
 
