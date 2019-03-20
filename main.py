@@ -17,83 +17,18 @@ def convert_to_png(name):
     im.save(f'{name}.png')
 
 
-class Toponim:
-    def __init__(self, toponym_to_find, name="newobject"):
-        self.toponim = None
-        self.name = name
-        geocoder_api_server = "http://geocode-maps.yandex.ru/1.x/"
-        geocoder_params = {"geocode": toponym_to_find, "format": "json"}
-        response = get(geocoder_api_server, params=geocoder_params)
-        if not response:
-            # обработка ошибочной ситуации
-            pass
-        # Преобразуем ответ в json-объект
-        self.toponim = response.json()
-        self.toponim = self.toponim["response"]["GeoObjectCollection"]["featureMember"][0]["GeoObject"]
+def get_map_on_coords(coords, z):
+    payload = {'apikey': 'fe93f537-0f16-4412-a99a-090347b6cc4f',
+               'l': 'skl',
+               'll': coords,
+               'z': z,
 
-    def set(self, response):
-        self.toponim = response["response"]["GeoObjectCollection"]["featureMember"][0]["GeoObject"]
-
-    def get(self):
-        return self.toponim
-
-    def get_coords(self):
-        coords = self.toponim["Point"]["pos"]
-        print(coords)
-        return list(map(float, coords.split(" ")))
-
-    def get_address(self):
-        return self.toponim["GeoObjectCollection"]["featureMember"][0]["GeoObject"]["metaDataProperty"][
-            "GeocoderMetaData"]["Address"]["formatted"]
-
-    def get_size(self):
-        coords = self.toponim["boundedBy"]["Envelope"]
-        a = list(map(float, coords["lowerCorner"].split(" ")))
-        c = list(map(float, coords["upperCorner"].split(" ")))
-        b = a[0], c[1]
-        width = lonlat_distance(a, b)
-        height = lonlat_distance(b, c)
-        return width, height
-
-    def get_corners(self):
-        coords = self.toponim["boundedBy"]["Envelope"]
-        a = list(map(float, coords["lowerCorner"].split(" ")))
-        c = list(map(float, coords["upperCorner"].split(" ")))
-        return a, c
-
-    def select_zoom(self, a, b):
-
-        a_lon, a_lat = a
-        b_lon, b_lat = b
-        delta_lon = abs(a_lon - b_lon)
-        delta_lat = abs(a_lat - b_lat)
-        z_x = math.log(180 / delta_lon, 2)
-        z_y = math.log(360 / delta_lat, 2)
-        z = max(int(z_x), int(z_y))
-
-        return z
-
-    def get_map(self):
-        z = self.select_zoom(*self.get_corners())
-        print(z)
-        payload = {'apikey': 'fe93f537-0f16-4412-a99a-090347b6cc4f',
-                   'l': choice(['map']),
-                   'z': z,
-                   'll': ','.join(list(map(str, self.get_coords()))),
-                   }
-        name = self.name
-        r = get("https://static-maps.yandex.ru/1.x", params=payload)
-        with open(f"{name}.jpg", "wb") as file:
-            file.write(r.content)
-        convert_to_png(name)
-        return name
-
-    def get_near_objects(self, keyword):
-        objects = search(keyword)
-        for obj in objects:
-            obj.append(lonlat_distance(obj[-1], self.get_coords()))
-        objects.sort(key=lambda organization: float(organization[-1]))
-        return objects
+               }
+    name = "newobject"
+    r = get("https://static-maps.yandex.ru/1.x", params=payload)
+    with open(f"{name}.jpg", "wb") as file:
+        file.write(r.content)
+    convert_to_png(name)
 
 
 class Application(QWidget):
@@ -128,8 +63,7 @@ class Application(QWidget):
         self.img.resize(GameData.width, GameData.pixmap_height)
 
     def check(self):
-        query = Toponim(self.address.text())
-        query.get_map()
+        get_map_on_coords(self.address.text().replace(" ", ""), GameData.z)
         pixmap = QPixmap("newobject.png")
         self.img.setPixmap(pixmap)
 
@@ -157,6 +91,7 @@ class GameData:
     longitude = ""
     latitude = ""
     images = []
+    z = 7
 
 
 def lonlat_distance(a, b):
