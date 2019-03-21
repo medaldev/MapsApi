@@ -3,7 +3,7 @@ import sys
 from requests import get
 from random import randint, choice
 from PIL import Image
-from PyQt5.QtWidgets import QApplication, QWidget, QPushButton
+from PyQt5.QtWidgets import QApplication, QWidget, QPushButton, QMainWindow
 from PyQt5.QtWidgets import QLCDNumber, QLabel, QLineEdit, QMessageBox
 from PyQt5.QtGui import QPixmap
 from itertools import cycle
@@ -31,11 +31,10 @@ def get_map_on_coords(coords, z):
     convert_to_png(name)
 
 
-class Application(QWidget):
+class Application(QMainWindow):
     def __init__(self):
         super().__init__()
         self.initUI()
-        self.check()
 
     def initUI(self):
         self.setGeometry(0, 0, GameData.width, GameData.height)
@@ -74,6 +73,12 @@ class Application(QWidget):
                               GameData.z)
         pixmap = QPixmap("newobject.png")
         self.img.setPixmap(pixmap)
+
+    def mousePressEvent(self, event):
+        focused_widget = QApplication.focusWidget()
+        if isinstance(focused_widget, QLineEdit):
+            focused_widget.clearFocus()
+        QMainWindow.mousePressEvent(self, event)
 
     def keyPressEvent(self, key):
         if key.key() == Qt.Key_PageDown:
