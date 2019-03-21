@@ -35,6 +35,7 @@ class Application(QWidget):
     def __init__(self):
         super().__init__()
         self.initUI()
+        self.check()
 
     def initUI(self):
         self.setGeometry(0, 0, GameData.width, GameData.height)
@@ -107,7 +108,7 @@ class Application(QWidget):
 
 class GameData:
     valid = None
-    map_views = ["map", "sat", "sat,skl"]
+    map_views = ["sat,skl", "map", "sat"]
     map_view = 0
     pixmap_height = 450
     width = 600
@@ -151,5 +152,4 @@ if __name__ == '__main__':
     app = QApplication(sys.argv)
     ex = Application()
     ex.show()
-    ex.check()
     sys.exit(app.exec())
