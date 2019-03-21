@@ -27,11 +27,17 @@ def get_coords(address):
     data = response.json()
     geo_object = data["response"]["GeoObjectCollection"]["featureMember"][0][
         "GeoObject"]
+    print(geo_object)
     wtf_Envelope = geo_object["boundedBy"]["Envelope"]
     corner1, corner2 = wtf_Envelope["lowerCorner"], wtf_Envelope["upperCorner"]
     corner1 = list(map(float, corner1.split()))
     corner2 = list(map(float, corner2.split()))
     GameData.z = select_zoom(corner1, corner2)
+    try:
+        GameData.post_index = geo_object["metaDataProperty"][
+            "GeocoderMetaData"]["Address"]["postal_code"]
+    except KeyError:
+        GameData.post_index = "нет индекса"
     return geo_object["Point"]["pos"]
 
 
@@ -163,6 +169,7 @@ class GameData:
     z = 7
     points = []
     address = ""
+    postal_index = ""
 
 
 def lonlat_distance(a, b):
