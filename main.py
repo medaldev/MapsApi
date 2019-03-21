@@ -19,7 +19,7 @@ def convert_to_png(name):
 
 def get_map_on_coords(coords, z):
     payload = {'apikey': 'fe93f537-0f16-4412-a99a-090347b6cc4f',
-               'l': 'skl',
+               'l': GameData.map_views[GameData.map_view],
                'll': coords,
                'z': z,
 
@@ -99,41 +99,57 @@ class Application(QWidget):
             GameData.longitude = max(GameData.longitude + delta, 180)
             print(GameData.longitude)
             self.check(coord_set=True)
+        elif key.key() == Qt.Key_Z:
+            GameData.map_view = (GameData.map_view + 1) % \
+                                len(GameData.map_views)
+            self.check()
 
 
 class GameData:
     valid = None
+    map_views = ["map", "sat", "sat,skl"]
+    map_view = 0
     pixmap_height = 450
     width = 600
     height = 600
-    z = 15
-    longitude = ""
-    latitude = ""
+    longitude = str(45.01)
+    latitude = str(53.16)
     images = []
     z = 7
 
 
 def lonlat_distance(a, b):
-    degree_to_meters_factor = 111 * 1000  # 111 километров в метрах
+    degree_to_meters_factor = 111 * 1000
     a_lon, a_lat = a
     b_lon, b_lat = b
-
-    # Берем среднюю по широте точку и считаем коэффициент для нее.
     radians_lattitude = math.radians((a_lat + b_lat) / 2.)
     lat_lon_factor = math.cos(radians_lattitude)
-
-    # Вычисляем смещения в метрах по вертикали и горизонтали.
     dx = abs(a_lon - b_lon) * degree_to_meters_factor * lat_lon_factor
     dy = abs(a_lat - b_lat) * degree_to_meters_factor
-
-    # Вычисляем расстояние между точками.
     distance = math.sqrt(dx * dx + dy * dy)
 
     return distance
+
+
+def select_zoom(a, b):
+
+    a_lon, a_lat = a
+    b_lon, b_lat = b
+
+    delta_lon = abs(a_lon - b_lon)
+    delta_lat = abs(a_lat - b_lat)
+
+    z_x = math.log(180 / delta_lon, 2)
+    z_y = math.log(360 / delta_lat, 2)
+
+    z = min(int(z_x), int(z_y))
+
+    return z
 
 
 if __name__ == '__main__':
     app = QApplication(sys.argv)
     ex = Application()
     ex.show()
+    ex.check()
     sys.exit(app.exec())
