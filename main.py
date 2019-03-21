@@ -1,5 +1,6 @@
 import math
 import sys
+import re
 from requests import get
 from random import randint, choice
 from PIL import Image
@@ -17,13 +18,31 @@ def convert_to_png(name):
     im.save(f'{name}.png')
 
 
-def get_map_on_coords(coords, z):
+def get_coords(address):
+    payload = {'apikey': 'fe93f537-0f16-4412-a99a-090347b6cc4f',
+               'geocode': address,
+               'format': 'json'}
+
+    response = get("https://geocode-maps.yandex.ru/1.x", params=payload)
+    data = loads(response.text)
+    return data["response"]["GeoObjectCollection"]["featureMember"][0]["GeoObject"]["Point"]["pos"]
+
+
+def get_map_on_coords(coords, z, points=[]):
     payload = {'apikey': 'fe93f537-0f16-4412-a99a-090347b6cc4f',
                'l': GameData.map_views[GameData.map_view],
                'll': coords,
                'z': z,
+               'pt': "",
 
                }
+    if points:
+        for i, point in enumerate(points):
+            payload["pt"] += f"{point[0]},{point[1]},pmgnm{i + 1}"
+            payload["pt"] += "~"
+        payload["pt"] = payload["pt"][:-1]
+    print(payload["pt"])
+    print(points)
     name = "newobject"
     r = get("https://static-maps.yandex.ru/1.x", params=payload)
     with open(f"{name}.jpg", "wb") as file:
@@ -63,16 +82,28 @@ class Application(QMainWindow):
         self.img.resize(GameData.width, GameData.pixmap_height)
 
     def check(self, coord_set=False):
-        if not coord_set:
-            get_map_on_coords(self.address.text().replace(" ", ""), GameData.z)
-            point = self.address.text().split(",")
-            GameData.longitude = float(point[0])
-            GameData.latitude = float(point[1])
-        else:
-            get_map_on_coords(f"{GameData.longitude},{GameData.latitude}",
-                              GameData.z)
-        pixmap = QPixmap("newobject.png")
-        self.img.setPixmap(pixmap)
+        try:
+            points = []
+            query = self.address.text().replace(" ", "")
+            if GameData.address or query:
+                if not query:
+                    query = GameData.address
+                if re.search(r"\d+(\.\d+)*,\d+(\.\d+)*", query) != query:
+                    points.append(get_coords(query).split())
+                    query = ",".join(get_coords(query).split())
+
+            if not coord_set:
+                get_map_on_coords(query, GameData.z, points=points)
+                point = query.split(",")
+                GameData.longitude = float(point[0])
+                GameData.latitude = float(point[1])
+            else:
+                get_map_on_coords(f"{GameData.longitude},{GameData.latitude}",
+                                  GameData.z, points=points)
+            pixmap = QPixmap("newobject.png")
+            self.img.setPixmap(pixmap)
+        except Exception as e:
+            QMessageBox.about(self, "error", str(e))
 
     def mousePressEvent(self, event):
         focused_widget = QApplication.focusWidget()
@@ -122,6 +153,7 @@ class GameData:
     latitude = str(53.146328)
     images = []
     z = 7
+    address = ""
 
 
 def lonlat_distance(a, b):
@@ -138,7 +170,6 @@ def lonlat_distance(a, b):
 
 
 def select_zoom(a, b):
-
     a_lon, a_lat = a
     b_lon, b_lat = b
 
