@@ -83,32 +83,32 @@ class Application(QMainWindow):
     def keyPressEvent(self, key):
         if key.key() == Qt.Key_PageDown:
             GameData.z = max(GameData.z - 1, 0)
-            self.check()
+            self.check(coord_set=True)
         elif key.key() == Qt.Key_PageUp:
             GameData.z = min(GameData.z + 1, 17)
-            self.check()
+            self.check(coord_set=True)
         elif key.key() == Qt.Key_Up:
-            delta = 360 / 2 ** GameData.z
-            GameData.latitude = max(GameData.latitude + delta, 90)
+            delta = 180 / 2 ** GameData.z
+            GameData.latitude = min(float(GameData.latitude) + delta, 90)
             self.check(coord_set=True)
         elif key.key() == Qt.Key_Down:
-            delta = 360 / 2 ** GameData.z
-            GameData.latitude = min(GameData.latitude - delta, -90)
+            delta = 180 / 2 ** GameData.z
+            GameData.latitude = max(float(GameData.latitude) - delta, -90)
             self.check(coord_set=True)
         elif key.key() == Qt.Key_Left:
-            delta = 180 / 2 ** GameData.z
-            GameData.longitude = min(GameData.longitude - delta, -180)
+            delta = 360 / 2 ** GameData.z
+            GameData.longitude = max(float(GameData.longitude) - delta, -180)
             print(GameData.longitude)
             self.check(coord_set=True)
         elif key.key() == Qt.Key_Right:
-            delta = 180 / 2 ** GameData.z
-            GameData.longitude = max(GameData.longitude + delta, 180)
+            delta = 360 / 2 ** GameData.z
+            GameData.longitude = min(float(GameData.longitude) + delta, 180)
             print(GameData.longitude)
             self.check(coord_set=True)
         elif key.key() == Qt.Key_Z:
             GameData.map_view = (GameData.map_view + 1) % \
                                 len(GameData.map_views)
-            self.check()
+            self.check(coord_set=True)
 
 
 class GameData:
@@ -118,8 +118,8 @@ class GameData:
     pixmap_height = 450
     width = 600
     height = 600
-    longitude = str(45.01)
-    latitude = str(53.16)
+    longitude = str(44.972349)
+    latitude = str(53.146328)
     images = []
     z = 7
 
@@ -157,4 +157,5 @@ if __name__ == '__main__':
     app = QApplication(sys.argv)
     ex = Application()
     ex.show()
+    ex.check(coord_set=True)
     sys.exit(app.exec())
