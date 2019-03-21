@@ -62,24 +62,43 @@ class Application(QWidget):
         self.img.move(0, self.address.height() + 2)
         self.img.resize(GameData.width, GameData.pixmap_height)
 
-    def check(self):
-        get_map_on_coords(self.address.text().replace(" ", ""), GameData.z)
+    def check(self, coord_set=False):
+        if not coord_set:
+            get_map_on_coords(self.address.text().replace(" ", ""), GameData.z)
+            point = self.address.text().split(",")
+            GameData.longitude = float(point[0])
+            GameData.latitude = float(point[1])
+        else:
+            get_map_on_coords(f"{GameData.longitude},{GameData.latitude}",
+                              GameData.z)
         pixmap = QPixmap("newobject.png")
         self.img.setPixmap(pixmap)
 
     def keyPressEvent(self, key):
         if key.key() == Qt.Key_PageDown:
-            pass
+            GameData.z = max(GameData.z - 1, 0)
+            self.check()
         elif key.key() == Qt.Key_PageUp:
-            pass
+            GameData.z = min(GameData.z + 1, 17)
+            self.check()
         elif key.key() == Qt.Key_Up:
-            pass
+            delta = 360 / 2 ** GameData.z
+            GameData.latitude = max(GameData.latitude + delta, 90)
+            self.check(coord_set=True)
         elif key.key() == Qt.Key_Down:
-            pass
+            delta = 360 / 2 ** GameData.z
+            GameData.latitude = min(GameData.latitude - delta, -90)
+            self.check(coord_set=True)
         elif key.key() == Qt.Key_Left:
-            pass
+            delta = 180 / 2 ** GameData.z
+            GameData.longitude = min(GameData.longitude - delta, -180)
+            print(GameData.longitude)
+            self.check(coord_set=True)
         elif key.key() == Qt.Key_Right:
-            pass
+            delta = 180 / 2 ** GameData.z
+            GameData.longitude = max(GameData.longitude + delta, 180)
+            print(GameData.longitude)
+            self.check(coord_set=True)
 
 
 class GameData:
