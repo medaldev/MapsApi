@@ -24,8 +24,15 @@ def get_coords(address):
                'format': 'json'}
 
     response = get("https://geocode-maps.yandex.ru/1.x", params=payload)
-    data = loads(response.text)
-    return data["response"]["GeoObjectCollection"]["featureMember"][0]["GeoObject"]["Point"]["pos"]
+    data = response.json()
+    geo_object = data["response"]["GeoObjectCollection"]["featureMember"][0][
+        "GeoObject"]
+    wtf_Envelope = geo_object["boundedBy"]["Envelope"]
+    corner1, corner2 = wtf_Envelope["lowerCorner"], wtf_Envelope["upperCorner"]
+    corner1 = list(map(float, corner1.split()))
+    corner2 = list(map(float, corner2.split()))
+    GameData.z = select_zoom(corner1, corner2)
+    return geo_object["Point"]["pos"]
 
 
 def get_map_on_coords(coords, z, points=[]):
@@ -38,7 +45,7 @@ def get_map_on_coords(coords, z, points=[]):
                }
     if points:
         for i, point in enumerate(points):
-            payload["pt"] += f"{point[0]},{point[1]},pmgnm{i + 1}"
+            payload["pt"] += f"{point[0]},{point[1]},pm2blm{i + 1}"
             payload["pt"] += "~"
         payload["pt"] = payload["pt"][:-1]
     print(payload["pt"])
@@ -91,6 +98,7 @@ class Application(QMainWindow):
                 if re.search(r"\d+(\.\d+)*,\d+(\.\d+)*", query) != query:
                     points.append(get_coords(query).split())
                     query = ",".join(get_coords(query).split())
+                    GameData.points = points.copy()
 
             if not coord_set:
                 get_map_on_coords(query, GameData.z, points=points)
@@ -99,7 +107,7 @@ class Application(QMainWindow):
                 GameData.latitude = float(point[1])
             else:
                 get_map_on_coords(f"{GameData.longitude},{GameData.latitude}",
-                                  GameData.z, points=points)
+                                  GameData.z, points=GameData.points)
             pixmap = QPixmap("newobject.png")
             self.img.setPixmap(pixmap)
         except Exception as e:
@@ -153,6 +161,7 @@ class GameData:
     latitude = str(53.146328)
     images = []
     z = 7
+    points = []
     address = ""
 
 
