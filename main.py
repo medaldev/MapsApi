@@ -24,8 +24,17 @@ def get_coords(address):
                'format': 'json'}
 
     response = get("https://geocode-maps.yandex.ru/1.x", params=payload)
-    data = loads(response.text)
-    return data["response"]["GeoObjectCollection"]["featureMember"][0]["GeoObject"]["Point"]["pos"]
+    data = response.json()
+    geo_object = data["response"]["GeoObjectCollection"]["featureMember"][0][
+        "GeoObject"]
+    GameData.address = data["response"]["GeoObjectCollection"]["featureMember"][0][
+        "GeoObject"]["metaDataProperty"]["GeocoderMetaData"]["Address"]["formatted"]
+    wtf_Envelope = geo_object["boundedBy"]["Envelope"]
+    corner1, corner2 = wtf_Envelope["lowerCorner"], wtf_Envelope["upperCorner"]
+    corner1 = list(map(float, corner1.split()))
+    corner2 = list(map(float, corner2.split()))
+    GameData.z = select_zoom(corner1, corner2)
+    return geo_object["Point"]["pos"]
 
 
 def get_map_on_coords(coords, z, points=[]):
@@ -41,8 +50,6 @@ def get_map_on_coords(coords, z, points=[]):
             payload["pt"] += f"{point[0]},{point[1]},pmgnm{i + 1}"
             payload["pt"] += "~"
         payload["pt"] = payload["pt"][:-1]
-    print(payload["pt"])
-    print(points)
     name = "newobject"
     r = get("https://static-maps.yandex.ru/1.x", params=payload)
     with open(f"{name}.jpg", "wb") as file:
@@ -81,6 +88,43 @@ class Application(QMainWindow):
         self.img.move(0, self.address.height() + 2)
         self.img.resize(GameData.width, GameData.pixmap_height)
 
+        self.full_address = QLineEdit(self)
+        self.full_address.setReadOnly(True)
+        self.full_address.setPlaceholderText("Полный адрес...")
+        self.full_address.resize(GameData.width - 2, 28)
+        self.full_address.setStyleSheet("border: 1px solid grey; background: rgba(255, 255, 255, 0.78);")
+        self.full_address.move(1, 450)
+
+        self.reset_but = QPushButton('Сброс', self)
+        self.reset_but.resize(149, 30)
+        self.reset_but.move(GameData.width - 151, GameData.height - 32)
+        self.reset_but.setStyleSheet("border: 1px solid grey;")
+        self.reset_but.clicked.connect(self.reset)
+
+        self.exit = QPushButton('Выход', self)
+        self.exit.resize(149, 30)
+        self.exit.move(2, GameData.height - 32)
+        self.exit.setStyleSheet("border: 1px solid grey;")
+        self.exit.clicked.connect(self.close)
+
+    def reset(self):
+        try:
+            query = self.address.text().replace(" ", "")
+            query = ",".join(get_coords(query).split())
+            get_map_on_coords(query, GameData.z, points=[])
+            print(query, GameData.z)
+            point = query.split(",")
+            GameData.longitude = float(point[0])
+            GameData.latitude = float(point[1])
+
+            pixmap = QPixmap("newobject.png")
+            self.img.setPixmap(pixmap)
+            self.full_address.setText("")
+            GameData.address = ""
+
+        except Exception as e:
+            QMessageBox.about(self, "error", str(e))
+
     def check(self, coord_set=False):
         try:
             points = []
@@ -102,8 +146,11 @@ class Application(QMainWindow):
                                   GameData.z, points=points)
             pixmap = QPixmap("newobject.png")
             self.img.setPixmap(pixmap)
+            self.full_address.setText(GameData.address)
         except Exception as e:
             QMessageBox.about(self, "error", str(e))
+
+
 
     def mousePressEvent(self, event):
         focused_widget = QApplication.focusWidget()
