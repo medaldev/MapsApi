@@ -62,6 +62,7 @@ def get_organization(address):
         GameData.address = "Организаций нет"
     return address
 
+
 def get_address(address):
     payload = {'apikey': 'fe93f537-0f16-4412-a99a-090347b6cc4f',
                'geocode': address,
@@ -153,7 +154,8 @@ class Application(QMainWindow):
 
         self.need_index = QCheckBox("Индекс", self)
         self.need_index.move(10, GameData.height - 100)
-        self.need_index.clicked.connect(self.change_index_field)
+        self.need_index.toggle()
+        self.need_index.stateChanged.connect(self.change_index_field)
 
         self.exit = QPushButton('Выход', self)
         self.exit.resize(149, 30)
@@ -162,12 +164,13 @@ class Application(QMainWindow):
         self.exit.clicked.connect(self.close)
 
     def change_index_field(self):
-        print("asdf")
         try:
             if self.need_index.isChecked():
-                self.index.setReadOnly(False)
+                self.index.move(GameData.width * 0.8, 450)
+
             else:
-                self.index.setReadOnly(True)
+                self.index.move(GameData.width * 0.8, 4500)
+
         except Exception as e:
             QMessageBox.about(self, "error", str(e))
 
