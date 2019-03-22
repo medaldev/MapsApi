@@ -27,18 +27,18 @@ def get_coords(address):
     data = response.json()
     geo_object = data["response"]["GeoObjectCollection"]["featureMember"][0][
         "GeoObject"]
-    GameData.address = data["response"]["GeoObjectCollection"]["featureMember"][0][
-        "GeoObject"]["metaDataProperty"]["GeocoderMetaData"]["Address"]["formatted"]
+    GameData.address = geo_object["metaDataProperty"]["GeocoderMetaData"][
+        "Address"]["formatted"]
     wtf_Envelope = geo_object["boundedBy"]["Envelope"]
     corner1, corner2 = wtf_Envelope["lowerCorner"], wtf_Envelope["upperCorner"]
     corner1 = list(map(float, corner1.split()))
     corner2 = list(map(float, corner2.split()))
     GameData.z = select_zoom(corner1, corner2)
     try:
-        GameData.post_index = geo_object["metaDataProperty"][
+        GameData.postal_index = geo_object["metaDataProperty"][
             "GeocoderMetaData"]["Address"]["postal_code"]
     except KeyError:
-        GameData.post_index = "нет индекса"
+        GameData.postal_index = "нет индекса"
     return geo_object["Point"]["pos"]
 
 
@@ -49,8 +49,15 @@ def get_address(address):
 
     response = get("https://geocode-maps.yandex.ru/1.x", params=payload)
     data = response.json()
-    GameData.address = data["response"]["GeoObjectCollection"]["featureMember"][0][
-        "GeoObject"]["metaDataProperty"]["GeocoderMetaData"]["Address"]["formatted"]
+    geo_object = data["response"]["GeoObjectCollection"]["featureMember"][0][
+        "GeoObject"]
+    GameData.address = geo_object["metaDataProperty"]["GeocoderMetaData"][
+        "Address"]["formatted"]
+    try:
+        GameData.postal_index = geo_object["metaDataProperty"][
+            "GeocoderMetaData"]["Address"]["postal_code"]
+    except KeyError:
+        GameData.postal_index = "нет индекса"
     return GameData.address
 
 
@@ -133,16 +140,9 @@ class Application(QMainWindow):
 
     def reset(self):
         try:
-            query = self.address.text().replace(" ", "")
-            query = ",".join(get_coords(query).split())
-            get_map_on_coords(query, GameData.z, points=[])
-            print(query, GameData.z)
-            point = query.split(",")
-            GameData.longitude = float(point[0])
-            GameData.latitude = float(point[1])
-
             pixmap = QPixmap("newobject.png")
             self.img.setPixmap(pixmap)
+            self.address.setText("")
             self.full_address.setText("")
             self.index.setText("")
 
@@ -176,7 +176,6 @@ class Application(QMainWindow):
             self.index.setText(GameData.postal_index)
         except Exception as e:
             QMessageBox.about(self, "error", str(e))
-
 
     def mousePressEvent(self, event):
         try:
