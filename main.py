@@ -132,15 +132,14 @@ class Application(QMainWindow):
         try:
             points = []
             query = self.address.text().replace(" ", "")
-            if GameData.address or query:
-                if not query:
-                    query = GameData.address
-                if re.search(r"\d+(\.\d+)*,\d+(\.\d+)*", query) != query:
-                    points.append(get_coords(query).split())
-                    query = ",".join(get_coords(query).split())
-                    GameData.points = points.copy()
-
             if not coord_set:
+                if GameData.address or query:
+                    if not query:
+                        query = GameData.address
+                    if re.search(r"\d+(\.\d+)*,\d+(\.\d+)*", query) != query:
+                        points.append(get_coords(query).split())
+                        query = ",".join(get_coords(query).split())
+                        GameData.points = points.copy()
                 get_map_on_coords(query, GameData.z, points=points)
                 point = query.split(",")
                 GameData.longitude = float(point[0])
@@ -161,10 +160,8 @@ class Application(QMainWindow):
             focused_widget.clearFocus()
         QMainWindow.mousePressEvent(self, event)
         point = get_click([event.pos().x(), event.pos().y()])
+        print(point)
         if point:
-            if GameData.points:
-                old_point = GameData.points[0]
-                print(old_point[0] - point[0], old_point[1] - point[1])
             GameData.points = [point]
             self.check(coord_set=True)
 
@@ -250,18 +247,18 @@ def get_click(point):
     map_center = [ex.img.rect().center().x(), ex.img.rect().center().y()]
     map_coords = GameData.get_coord()
     map_pos = [ex.img.rect().x(), ex.img.rect().y()]
-    delta_x, delta_y = x - map_center[0], map_center[1] - y + 30
+    delta_x, delta_y = x - map_center[0], map_center[1] - y
     width, height = ex.img.rect().width(), ex.img.rect().height()
     if abs(delta_x) > width / 2 or abs(delta_y) > height / 2:
         return False
     lon_view, lat_view = 360.0 / 2 ** GameData.z, 180.0 / 2 ** GameData.z
-    pix_ratio_x, pix_ratio_y = delta_x / (width / 2), delta_y / (height / 2)
+    pix_ratio_x, pix_ratio_y = delta_x / (width / 2), (delta_y + 30) / (height / 2)
     k1, k2 = 1.2, 1.05
     delta_lon = pix_ratio_x * lon_view * k1
     delta_lat = pix_ratio_y * lat_view * k2
     lon = float(map_coords[0]) + delta_lon
     lat = float(map_coords[1]) + delta_lat
-    return lon, lat
+    return [lon, lat]
 
 
 if __name__ == '__main__':
