@@ -5,7 +5,7 @@ from requests import get
 from random import randint, choice
 from PIL import Image
 from PyQt5.QtWidgets import QApplication, QWidget, QPushButton, QMainWindow
-from PyQt5.QtWidgets import QLCDNumber, QLabel, QLineEdit, QMessageBox
+from PyQt5.QtWidgets import QLCDNumber, QLabel, QLineEdit, QMessageBox, QCheckBox
 from PyQt5.QtGui import QPixmap
 from itertools import cycle
 from json import dumps, loads
@@ -115,7 +115,6 @@ class Application(QMainWindow):
         self.address.setPlaceholderText("ответ...")
         self.address.resize(GameData.width - 150, 28)
         self.address.setStyleSheet("border: 1px solid grey;")
-
         self.address.move(1, 1)
 
         self.search_button = QPushButton('Найти', self)
@@ -152,11 +151,25 @@ class Application(QMainWindow):
         self.reset_but.setStyleSheet("border: 1px solid grey;")
         self.reset_but.clicked.connect(self.reset)
 
+        self.need_index = QCheckBox("Индекс", self)
+        self.need_index.move(10, GameData.height - 100)
+        self.need_index.clicked.connect(self.change_index_field)
+
         self.exit = QPushButton('Выход', self)
         self.exit.resize(149, 30)
         self.exit.move(2, GameData.height - 32)
         self.exit.setStyleSheet("border: 1px solid grey;")
         self.exit.clicked.connect(self.close)
+
+    def change_index_field(self):
+        print("asdf")
+        try:
+            if self.need_index.isChecked():
+                self.index.setReadOnly(False)
+            else:
+                self.index.setReadOnly(True)
+        except Exception as e:
+            QMessageBox.about(self, "error", str(e))
 
     def reset(self):
         try:
