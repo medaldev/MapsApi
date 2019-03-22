@@ -27,7 +27,6 @@ def get_coords(address):
     data = response.json()
     geo_object = data["response"]["GeoObjectCollection"]["featureMember"][0][
         "GeoObject"]
-    print(geo_object)
     wtf_Envelope = geo_object["boundedBy"]["Envelope"]
     corner1, corner2 = wtf_Envelope["lowerCorner"], wtf_Envelope["upperCorner"]
     corner1 = list(map(float, corner1.split()))
@@ -161,6 +160,13 @@ class Application(QMainWindow):
         if isinstance(focused_widget, QLineEdit):
             focused_widget.clearFocus()
         QMainWindow.mousePressEvent(self, event)
+        point = get_click([event.pos().x(), event.pos().y()])
+        if point:
+            if GameData.points:
+                old_point = GameData.points[0]
+                print(old_point[0] - point[0], old_point[1] - point[1])
+            GameData.points = [point]
+            self.check(coord_set=True)
 
     def keyPressEvent(self, key):
         if key.key() == Qt.Key_PageDown:
@@ -180,12 +186,10 @@ class Application(QMainWindow):
         elif key.key() == Qt.Key_Left:
             delta = 360 / 2 ** GameData.z
             GameData.longitude = max(float(GameData.longitude) - delta, -180)
-            print(GameData.longitude)
             self.check(coord_set=True)
         elif key.key() == Qt.Key_Right:
             delta = 360 / 2 ** GameData.z
             GameData.longitude = min(float(GameData.longitude) + delta, 180)
-            print(GameData.longitude)
             self.check(coord_set=True)
         elif key.key() == Qt.Key_Z:
             GameData.map_view = (GameData.map_view + 1) % \
@@ -208,6 +212,10 @@ class GameData:
     address = ""
     postal_index = ""
 
+    @staticmethod
+    def get_coord():
+        return GameData.longitude, GameData.latitude
+
 
 def lonlat_distance(a, b):
     degree_to_meters_factor = 111 * 1000
@@ -229,12 +237,31 @@ def select_zoom(a, b):
     delta_lon = abs(a_lon - b_lon)
     delta_lat = abs(a_lat - b_lat)
 
-    z_x = math.log(180 / delta_lon, 2)
-    z_y = math.log(360 / delta_lat, 2)
+    z_x = math.log(180.0 / delta_lon, 2)
+    z_y = math.log(360.0 / delta_lat, 2)
 
     z = min(int(z_x), int(z_y))
 
     return z
+
+
+def get_click(point):
+    x, y = point
+    map_center = [ex.img.rect().center().x(), ex.img.rect().center().y()]
+    map_coords = GameData.get_coord()
+    map_pos = [ex.img.rect().x(), ex.img.rect().y()]
+    delta_x, delta_y = x - map_center[0], map_center[1] - y
+    width, height = ex.img.rect().width(), ex.img.rect().height()
+    if abs(delta_x) > width / 2 or abs(delta_y) > height / 2:
+        return False
+    lon_view, lat_view = 360.0 / 2 ** GameData.z, 180.0 / 2 ** GameData.z
+    pix_ratio_x, pix_ratio_y = delta_x / (width / 2), delta_y / (height / 2)
+    k1, k2 = 1.2, 1.05
+    delta_lon = pix_ratio_x * lon_view * k1
+    delta_lat = pix_ratio_y * lat_view * k2
+    lon = float(map_coords[0]) + delta_lon
+    lat = float(map_coords[1]) + delta_lat
+    return lon, lat
 
 
 if __name__ == '__main__':
