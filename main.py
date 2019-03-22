@@ -42,6 +42,26 @@ def get_coords(address):
     return geo_object["Point"]["pos"]
 
 
+def get_organization(address):
+    lon, lat = list(map(float, address.split(",")))
+    radians_lattitude = math.radians(lat)
+    lat_lon_factor = math.cos(radians_lattitude)
+    lon_r, lat_r = 50 / (111 * 1000) * lat_lon_factor, 50 / (111 * 1000)
+    print(f"{lon_r},{lat_r}")
+    args = {"apikey": "dda3ddba-c9ea-4ead-9010-f43fbc15c6e3",
+            "lang": "ru_RU",
+            "bbox": f"{lon + lon_r},{lat + lat_r}~{lon - lon_r},{lat - lat_r}",
+            "rspn": 1,
+            "type": "biz"}
+    response = get("https://search-maps.yandex.ru/v1/", params=args)
+    json_response = response.json()
+    try:
+        organization = json_response["features"][0]
+        GameData.address = organization["properties"]["CompanyMetaData"]["name"]
+    except IndexError:
+        GameData.address = "Организаций нет"
+    return address
+
 def get_address(address):
     payload = {'apikey': 'fe93f537-0f16-4412-a99a-090347b6cc4f',
                'geocode': address,
@@ -146,7 +166,9 @@ class Application(QMainWindow):
             self.full_address.setText("")
             self.index.setText("")
 
+            GameData.points = []
             GameData.address = ""
+            self.check(coord_set=True)
 
         except Exception as e:
             QMessageBox.about(self, "error", str(e))
@@ -184,9 +206,11 @@ class Application(QMainWindow):
                 focused_widget.clearFocus()
             QMainWindow.mousePressEvent(self, event)
             point = get_click([event.pos().x(), event.pos().y()])
-            get_address(",".join(list(map(str, point))))
-            self.index.setText(GameData.postal_index)
-
+            if event.button() == 1:
+                get_address(",".join(list(map(str, point))))
+                self.index.setText(GameData.postal_index)
+            elif event.button() == 2:
+                get_organization(",".join(list(map(str, point))))
             if point:
                 GameData.points = [point]
                 self.check(coord_set=True)
