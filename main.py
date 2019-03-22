@@ -27,6 +27,8 @@ def get_coords(address):
     data = response.json()
     geo_object = data["response"]["GeoObjectCollection"]["featureMember"][0][
         "GeoObject"]
+    GameData.address = data["response"]["GeoObjectCollection"]["featureMember"][0][
+        "GeoObject"]["metaDataProperty"]["GeocoderMetaData"]["Address"]["formatted"]
     wtf_Envelope = geo_object["boundedBy"]["Envelope"]
     corner1, corner2 = wtf_Envelope["lowerCorner"], wtf_Envelope["upperCorner"]
     corner1 = list(map(float, corner1.split()))
@@ -38,6 +40,18 @@ def get_coords(address):
     except KeyError:
         GameData.post_index = "нет индекса"
     return geo_object["Point"]["pos"]
+
+
+def get_address(address):
+    payload = {'apikey': 'fe93f537-0f16-4412-a99a-090347b6cc4f',
+               'geocode': address,
+               'format': 'json'}
+
+    response = get("https://geocode-maps.yandex.ru/1.x", params=payload)
+    data = response.json()
+    GameData.address = data["response"]["GeoObjectCollection"]["featureMember"][0][
+        "GeoObject"]["metaDataProperty"]["GeocoderMetaData"]["Address"]["formatted"]
+    return GameData.address
 
 
 def get_map_on_coords(coords, z, points=[]):
@@ -94,9 +108,16 @@ class Application(QMainWindow):
         self.full_address = QLineEdit(self)
         self.full_address.setReadOnly(True)
         self.full_address.setPlaceholderText("Полный адрес...")
-        self.full_address.resize(GameData.width - 2, 28)
+        self.full_address.resize(GameData.width * 0.8 - 5, 28)
         self.full_address.setStyleSheet("border: 1px solid grey; background: rgba(255, 255, 255, 0.78);")
         self.full_address.move(1, 450)
+
+        self.index = QLineEdit(self)
+        self.index.setReadOnly(True)
+        self.index.setPlaceholderText("индекс...")
+        self.index.resize(GameData.width * 0.2, 28)
+        self.index.setStyleSheet("border: 1px solid grey; background: rgba(255, 255, 255, 0.78);")
+        self.index.move(GameData.width * 0.8, 450)
 
         self.reset_but = QPushButton('Сброс', self)
         self.reset_but.resize(149, 30)
@@ -123,6 +144,8 @@ class Application(QMainWindow):
             pixmap = QPixmap("newobject.png")
             self.img.setPixmap(pixmap)
             self.full_address.setText("")
+            self.index.setText("")
+
             GameData.address = ""
 
         except Exception as e:
@@ -150,20 +173,26 @@ class Application(QMainWindow):
             pixmap = QPixmap("newobject.png")
             self.img.setPixmap(pixmap)
             self.full_address.setText(GameData.address)
+            self.index.setText(GameData.postal_index)
         except Exception as e:
             QMessageBox.about(self, "error", str(e))
 
 
     def mousePressEvent(self, event):
-        focused_widget = QApplication.focusWidget()
-        if isinstance(focused_widget, QLineEdit):
-            focused_widget.clearFocus()
-        QMainWindow.mousePressEvent(self, event)
-        point = get_click([event.pos().x(), event.pos().y()])
-        print(point)
-        if point:
-            GameData.points = [point]
-            self.check(coord_set=True)
+        try:
+            focused_widget = QApplication.focusWidget()
+            if isinstance(focused_widget, QLineEdit):
+                focused_widget.clearFocus()
+            QMainWindow.mousePressEvent(self, event)
+            point = get_click([event.pos().x(), event.pos().y()])
+            get_address(",".join(list(map(str, point))))
+            self.index.setText(GameData.postal_index)
+
+            if point:
+                GameData.points = [point]
+                self.check(coord_set=True)
+        except Exception as e:
+            QMessageBox.about(self, "error", str(e))
 
     def keyPressEvent(self, key):
         if key.key() == Qt.Key_PageDown:
