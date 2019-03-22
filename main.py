@@ -250,7 +250,7 @@ def get_click(point):
     map_center = [ex.img.rect().center().x(), ex.img.rect().center().y()]
     map_coords = GameData.get_coord()
     map_pos = [ex.img.rect().x(), ex.img.rect().y()]
-    delta_x, delta_y = x - map_center[0], map_center[1] - y
+    delta_x, delta_y = x - map_center[0], map_center[1] - y + 30
     width, height = ex.img.rect().width(), ex.img.rect().height()
     if abs(delta_x) > width / 2 or abs(delta_y) > height / 2:
         return False
