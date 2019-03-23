@@ -5,7 +5,8 @@ from requests import get
 from random import randint, choice
 from PIL import Image
 from PyQt5.QtWidgets import QApplication, QWidget, QPushButton, QMainWindow
-from PyQt5.QtWidgets import QLCDNumber, QLabel, QLineEdit, QMessageBox, QCheckBox
+from PyQt5.QtWidgets import QLCDNumber, QLabel, QLineEdit, QMessageBox, \
+    QCheckBox
 from PyQt5.QtGui import QPixmap
 from itertools import cycle
 from json import dumps, loads
@@ -136,14 +137,16 @@ class Application(QMainWindow):
         self.full_address.setReadOnly(True)
         self.full_address.setPlaceholderText("Полный адрес...")
         self.full_address.resize(GameData.width * 0.8 - 5, 28)
-        self.full_address.setStyleSheet("border: 1px solid grey; background: rgba(255, 255, 255, 0.78);")
+        self.full_address.setStyleSheet(
+            "border: 1px solid grey; background: rgba(255, 255, 255, 0.78);")
         self.full_address.move(1, 450)
 
         self.index = QLineEdit(self)
         self.index.setReadOnly(True)
         self.index.setPlaceholderText("индекс...")
         self.index.resize(GameData.width * 0.2, 28)
-        self.index.setStyleSheet("border: 1px solid grey; background: rgba(255, 255, 255, 0.78);")
+        self.index.setStyleSheet(
+            "border: 1px solid grey; background: rgba(255, 255, 255, 0.78);")
         self.index.move(GameData.width * 0.8, 450)
 
         self.reset_but = QPushButton('Сброс', self)
@@ -320,7 +323,8 @@ def get_click(point):
     if abs(delta_x) > width / 2 or abs(delta_y) > height / 2:
         return False
     lon_view, lat_view = 360.0 / 2 ** GameData.z, 180.0 / 2 ** GameData.z
-    pix_ratio_x, pix_ratio_y = delta_x / (width / 2), (delta_y + 30) / (height / 2)
+    pix_ratio_x, pix_ratio_y = delta_x / (width / 2), (delta_y + 30) / (
+                height / 2)
     k1, k2 = 1.2, 1.05
     delta_lon = pix_ratio_x * lon_view * k1
     delta_lat = pix_ratio_y * lat_view * k2
