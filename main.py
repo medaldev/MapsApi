@@ -237,6 +237,7 @@ class Application(QMainWindow):
             QMessageBox.about(self, "error", str(e))
 
     def keyPressEvent(self, key):
+        move_k = 2
         if key.key() == Qt.Key_PageDown:
             GameData.z = max(GameData.z - 1, 0)
             self.check(coord_set=True)
@@ -244,19 +245,19 @@ class Application(QMainWindow):
             GameData.z = min(GameData.z + 1, 17)
             self.check(coord_set=True)
         elif key.key() == Qt.Key_Up:
-            delta = 180 / 2 ** GameData.z
+            delta = 180 / 2 ** GameData.z * move_k
             GameData.latitude = min(float(GameData.latitude) + delta, 90)
             self.check(coord_set=True)
         elif key.key() == Qt.Key_Down:
-            delta = 180 / 2 ** GameData.z
+            delta = 180 / 2 ** GameData.z * move_k
             GameData.latitude = max(float(GameData.latitude) - delta, -90)
             self.check(coord_set=True)
         elif key.key() == Qt.Key_Left:
-            delta = 360 / 2 ** GameData.z
+            delta = 360 / 2 ** GameData.z * move_k
             GameData.longitude = max(float(GameData.longitude) - delta, -180)
             self.check(coord_set=True)
         elif key.key() == Qt.Key_Right:
-            delta = 360 / 2 ** GameData.z
+            delta = 360 / 2 ** GameData.z * move_k
             GameData.longitude = min(float(GameData.longitude) + delta, 180)
             self.check(coord_set=True)
         elif key.key() == Qt.Key_Z:
