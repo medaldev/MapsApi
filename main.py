@@ -187,6 +187,7 @@ class Application(QMainWindow):
 
             GameData.points = []
             GameData.address = ""
+            GameData.postal_index = ""
             self.check(coord_set=True)
 
         except Exception as e:
