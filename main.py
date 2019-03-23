@@ -48,7 +48,6 @@ def get_organization(address):
     radians_lattitude = math.radians(lat)
     lat_lon_factor = math.cos(radians_lattitude)
     lon_r, lat_r = 50 / (111 * 1000) * lat_lon_factor, 50 / (111 * 1000)
-    print(f"{lon_r},{lat_r}")
     args = {"apikey": "dda3ddba-c9ea-4ead-9010-f43fbc15c6e3",
             "lang": "ru_RU",
             "bbox": f"{lon + lon_r},{lat + lat_r}~{lon - lon_r},{lat - lat_r}",
@@ -59,9 +58,12 @@ def get_organization(address):
     try:
         organization = json_response["features"][0]
         GameData.address = organization["properties"]["CompanyMetaData"]["name"]
+        GameData.points = [",".join(
+            list(map(str, organization["geometry"]["coordinates"])))]
+        return organization["geometry"]["coordinates"]
     except IndexError:
         GameData.address = "Организаций нет"
-    return address
+        return False
 
 
 def get_address(address):
@@ -230,7 +232,10 @@ class Application(QMainWindow):
                 get_address(",".join(list(map(str, point))))
                 self.index.setText(GameData.postal_index)
             elif event.button() == 2:
-                get_organization(",".join(list(map(str, point))))
+                point = get_organization(",".join(list(map(str, point))))
+                if not point:
+                    GameData.points = []
+                    self.check(coord_set=True)
             if point:
                 GameData.points = [point]
                 self.check(coord_set=True)
